@@ -10,4 +10,7 @@ router.post('/', authMiddleware, hackathonController.createHackathon);
 // Get all hackathons (public route)
 router.get('/', hackathonController.getHackathons);
 
+// Get a single hackathon by ID (public route)
+router.get('/:id', hackathonController.getHackathonById);
+
 module.exports = router;

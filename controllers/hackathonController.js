@@ -38,3 +38,16 @@ exports.getHackathons = async (req, res) => {
     res.status(500).json({ message: 'Error fetching hackathons', error: err.message });
   }
 };
+
+// Get a single hackathon by ID (public route)
+exports.getHackathonById = async (req, res) => {
+  try {
+    const hackathon = await Hackathon.findById(req.params.id).populate('createdBy', 'name email');
+    if (!hackathon) {
+      return res.status(404).json({ message: 'Hackathon not found' });
+    }
+    res.status(200).json(hackathon);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching hackathon', error: err.message });
+  }
+};
