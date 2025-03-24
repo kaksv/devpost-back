@@ -51,3 +51,43 @@ exports.getHackathonById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching hackathon', error: err.message });
   }
 };
+
+// Participate in a hackathon
+exports.participate = async (req, res) => {
+  try {
+    const hackathon = await Hackathon.findById(req.params.id);
+    if (!hackathon) {
+      return res.status(404).json({ message: 'Hackathon not found' });
+    }
+
+    // Check if user is already participating
+    if (hackathon.participants.includes(req.userId)) {
+      return res.status(400).json({ message: 'You are already participating in this hackathon' });
+    }
+
+    hackathon.participants.push(req.userId);
+    await hackathon.save();
+
+    res.status(200).json({ 
+      message: 'Successfully joined hackathon',
+      redirectTo: `/submit-project/${req.params.id}` // Frontend will handle redirection
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error participating in hackathon', error: err.message });
+  }
+};
+
+// Check participation status
+exports.checkParticipation = async (req, res) => {
+  try {
+    const hackathon = await Hackathon.findById(req.params.id);
+    if (!hackathon) {
+      return res.status(404).json({ message: 'Hackathon not found' });
+    }
+
+    const isParticipating = hackathon.participants.includes(req.userId);
+    res.status(200).json({ isParticipating });
+  } catch (err) {
+    res.status(500).json({ message: 'Error checking participation', error: err.message });
+  }
+};
