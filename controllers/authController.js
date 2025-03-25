@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 
 // Register a new user
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, redirectTo } = req.body; //Add the redirectTo parameter
 
   try {
     let user = await User.findOne({ email });
@@ -21,7 +21,10 @@ exports.register = async (req, res) => {
     const payload = { userId: user._id, role: user.role };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(201).json({ token });
+    res.status(201).json({ 
+      token,
+      redirectTo: redirectTo || (userRole === 'admin' ? '/hackathons' : '/projects') // Default fallback
+    });
   } catch (err) {
     res.status(500).json({ message: 'Error registering user', error: err.message });
   }
@@ -42,10 +45,17 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const payload = { userId: user._id, role: user.role };
+    const payload = {
+       userId: user._id, 
+       role: user.role,
+       name: user.name // Include name in the token payload.
+      };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(200).json({ token });
+    res.status(200).json({
+       token,
+       role: user.role  // Explicitly send role in response
+      });
   } catch (err) {
     res.status(500).json({ message: 'Error logging in', error: err.message });
   }

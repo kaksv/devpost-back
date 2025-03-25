@@ -55,39 +55,80 @@ exports.getHackathonById = async (req, res) => {
 // Participate in a hackathon
 exports.participate = async (req, res) => {
   try {
+    // Verify hackathon exists
     const hackathon = await Hackathon.findById(req.params.id);
     if (!hackathon) {
       return res.status(404).json({ message: 'Hackathon not found' });
     }
 
+    
     // Check if user is already participating
-    if (hackathon.participants.includes(req.userId)) {
-      return res.status(400).json({ message: 'You are already participating in this hackathon' });
+    const existingParticipant = hackathon.participants.find(
+      p => p.user.toString() === req.userId.toString()
+    );
+
+    if (existingParticipant) {
+      return res.status(200).json({  // Change from 400 to 200 since we'll handle this as success
+        success: true,
+        alreadyParticipating: true,
+        hackathonId: hackathon._id
+      });
     }
 
-    hackathon.participants.push(req.userId);
+    // Add user to participants
+    hackathon.participants.push({ user: req.userId });
     await hackathon.save();
 
     res.status(200).json({ 
-      message: 'Successfully joined hackathon',
-      redirectTo: `/submit-project/${req.params.id}` // Frontend will handle redirection
+      success: true,
+      hackathonId: hackathon._id,
+      message: 'Successfully joined hackathon'
     });
+
+    // hackathon.participants.push(req.userId);
+    // await hackathon.save();
+
+    // res.status(200).json({ 
+    //   message: 'Successfully joined hackathon',
+    //   redirectTo: `/submit-project/${req.params.id}` // Frontend will handle redirection
+    // });
   } catch (err) {
-    res.status(500).json({ message: 'Error participating in hackathon', error: err.message });
+    console.error('Participation error:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error participating in hackathon',
+      error: err.message
+    });
   }
 };
 
 // Check participation status
 exports.checkParticipation = async (req, res) => {
   try {
-    const hackathon = await Hackathon.findById(req.params.id);
+    const hackathon = await Hackathon.findById(req.params.id)
+    .select('participants title')
+    .lean();
     if (!hackathon) {
-      return res.status(404).json({ message: 'Hackathon not found' });
+      return res.status(404).json({
+        isParticipating: false,
+         message: 'Hackathon not found'
+         });
     }
 
-    const isParticipating = hackathon.participants.includes(req.userId);
+    const isParticipating = hackathon.participants.some(
+      p => p.user.toString() === req.userId.toString()
+    );
+
     res.status(200).json({ isParticipating });
   } catch (err) {
-    res.status(500).json({ message: 'Error checking participation', error: err.message });
+    res.status(500).json({
+      isParticipating: false,
+      message: 'Error checking participation'
+    });
   }
+  //   const isParticipating = hackathon.participants.includes(req.userId);
+  //   res.status(200).json({ isParticipating });
+  // } catch (err) {
+  //   res.status(500).json({ message: 'Error checking participation', error: err.message });
+  // }
 };
