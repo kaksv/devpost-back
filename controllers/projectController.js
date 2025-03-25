@@ -30,7 +30,14 @@ exports.createProject = async (req, res) => {
 // Get all projects
 exports.getProjects = async (req, res) => {
   try {
-    const projects = await Project.find()
+    let query = {};
+
+     // Add featured filter
+     if (req.query.featured) {
+      query.featured = true;
+    }
+
+    const projects = await Project.find(query)
       .populate('hackathon', 'title')
       .populate('team', 'name email')
       .populate('createdBy', 'name email');

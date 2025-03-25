@@ -32,7 +32,15 @@ exports.createHackathon = async (req, res) => {
 // Get all hackathons (public route)
 exports.getHackathons = async (req, res) => {
   try {
-    const hackathons = await Hackathon.find().populate('createdBy', 'name email');
+    let query = {};
+
+    // Add status filter
+    if (req.query.status === 'active') {
+      query.endDate = { $gte: new Date() };
+      query.startDate = { $lte: new Date() };
+    }
+
+    const hackathons = await Hackathon.find(query).populate('createdBy', 'name email');
     res.status(200).json(hackathons);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching hackathons', error: err.message });
