@@ -46,3 +46,19 @@ exports.getProjects = async (req, res) => {
     res.status(500).json({ message: 'Error fetching projects', error: err.message });
   }
 };
+
+// Get a project by ID
+exports.getProjectById = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate('hackathon', 'title') // Customize populated fields
+      .populate('team', 'name email')
+      .populate('createdBy', 'name email');
+
+    if (!project) return res.status(404).send('Project not found');
+
+    res.send(project);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
